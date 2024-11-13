@@ -1,0 +1,161 @@
+---
+title: "Gradient Descent"
+author: "Giacomo Negri"
+date: "November 5, 2024"
+output: html_document
+---
+
+
+## Define a function on two-dimensional space
+
+#### Quadratic function
+```{r}
+f_fun <- function(x,gamma=4){
+  return(x[1]^2+gamma*x[2]^2)
+}
+
+f_grad <- function(x,gamma=4){
+  g = rep(0,2)
+  g[1] = 2*x[1]
+  g[2] = 2*gamma*x[2]
+  return(g)
+}
+
+plot_scale = 2
+plot_center = c(0,0)
+```
+
+#### Non-quadratic function
+```{r}
+f_fun <- function(x){
+  return(exp(x[1]+3*x[2]-0.1)+exp(x[1]-3*x[2]-0.1)+exp(-x[1]-0.1))
+}
+
+f_grad <- function(x){
+  g = rep(0,2)
+  g[1] = exp(x[1]+3*x[2]-0.1)+exp(x[1]-3*x[2]-0.1)-exp(-x[1]-0.1)
+  g[2] = 3*exp(x[1]+3*x[2]-0.1)-3*exp(x[1]-3*x[2]-0.1)
+  return(g)
+}
+
+plot_scale = 3
+plot_center = c(-0.345,0)
+```
+
+#### Non-convex functions
+```{r}
+f_fun <- function(x, gamma=0.1){
+  return(-cos(x[1]^2+x[2]^2) + gamma * (x[1]^2+x[2]^2) )
+}
+
+f_grad <- function(x, gamma=0.1){
+  g = rep(0,2)
+  g[1] = sin(x[1]^2+x[2]^2) * 2 * x[1] + 2*gamma*x[1]
+  g[2] = sin(x[1]^2+x[2]^2) * 2 * x[2] + 2*gamma*x[2]
+  return(g)
+}
+
+plot_scale = 3
+plot_center = c(0,0)
+```
+
+
+#### Plot Contours
+```{r}
+library(ggplot2)
+x_uni = seq(-1,1,0.01)*plot_scale
+n_uni = length(x_uni)
+n = n_uni^2
+x = matrix(0, nrow=n, ncol=2)
+y = rep(0, n)
+loc = 1
+for (i in 1:n_uni){
+  for (j in 1:n_uni){
+    x[loc,] = c(x_uni[i], x_uni[j]) + plot_center
+    y[loc] = f_fun(x[loc,])
+    loc = loc + 1
+  }
+}
+df = data.frame(x1=x[,1],x2=x[,2],y=y)
+p0 = ggplot() + geom_raster(data=df,aes(x1,x2,fill=y),interpolate=TRUE) + 
+  scale_fill_distiller(palette = "Spectral") + 
+  geom_contour(data=df,aes(x1,x2,z=y),color='black',linetype="dotted") + 
+  theme_void()
+print(p0)
+```
+
+
+#### Gradient Descent with backtracking
+```{r}
+backtracking <- function(fun, grad, x, y, alpha=0.2, beta=0.5, t_init=1){
+  gradient = grad(x)
+  t = t_init
+  accept = FALSE
+  while (!accept){
+    x_new = x - t*gradient
+    y_new = fun(x_new)
+    if (y_new <= y - alpha*t*sum(gradient^2)){
+      accept = TRUE
+    } else{
+      t = t * beta
+    }
+  }
+  return(list(x_new,y_new))
+}
+
+
+GD <- function(fun, grad, x0, alpha=0.2, beta=0.5, tol=1e-5){
+  maxIter = 1000
+  x = x0
+  y = fun(x0)
+  for (i in 1:maxIter){
+    xy_new = backtracking(fun, grad, x, y, alpha, beta)
+    if (abs(xy_new[[2]]-y)<tol){
+      break
+    }
+    x = xy_new[[1]]
+    y = xy_new[[2]]
+  }
+  return(c(xy_new,i))
+}
+```
+
+
+#### Step by step gradient descent
+###### Initialization
+```{r}
+## for non-convex example, deviation=0.75 stucks, while =0.4 works
+deviation=0.75
+x = c(1,1)*deviation*plot_scale + plot_center
+y = f_fun(x)
+df_point = data.frame(x1=x[1],x2=x[2])
+pk = p0 + geom_point(data=df_point,aes(x1,x2),shape=9,size=3)
+print(pk)
+```
+###### Run the following chunk to perform one gradient step. Repeatedly run to get the trajectory of Gradient descent.
+```{r}
+tol = 1e-5
+xy_new = backtracking(f_fun, f_grad, x, y)
+x_new = xy_new[[1]]
+df_point = data.frame(x1=x_new[1],x2=x_new[2])
+df_line = data.frame(x1=c(x[1],x_new[1]),x2=c(x[2],x_new[2]))
+pk = pk + geom_point(data=df_point,aes(x1,x2),shape=9,size=3) + 
+  geom_line(data=df_line,aes(x1,x2),linewidth=1.2)
+print(pk)
+x = x_new
+y = xy_new[[2]]
+print(xy_new)
+```
+
+
+#### The whole gradient descent algorithm
+```{r}
+gd_obj = GD(f_fun, f_grad, c(1,1))
+print(gd_obj)
+```
+
+
+
+
+
+

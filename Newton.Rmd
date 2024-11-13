@@ -1,0 +1,158 @@
+---
+title: "Newton"
+author: "Giacomo Negri"
+date: "November 10, 2024"
+output: html_document
+---
+
+
+## Define a function on two-dimensional space
+
+#### Quadratic function
+```{r}
+f_fun <- function(x,gamma=4){
+  return(x[1]^2+gamma*x[2]^2)
+}
+
+f_grad <- function(x,gamma=4){
+  g = rep(0,2)
+  g[1] = 2*x[1]
+  g[2] = 2*gamma*x[2]
+  return(g)
+}
+
+f_hessian <- function(x,gamma=4){
+  H = matrix(0, nrow=2, ncol=2)
+  H[1,1] = 2
+  H[2,2] = 2*gamma
+  return(H)
+}
+
+plot_scale = 2
+plot_center = c(0,0)
+```
+
+#### Non-quadratic function
+```{r}
+f_fun <- function(x){
+  return(exp(x[1]+3*x[2]-0.1)+exp(x[1]-3*x[2]-0.1)+exp(-x[1]-0.1))
+}
+
+f_grad <- function(x){
+  g = rep(0,2)
+  g[1] = exp(x[1]+3*x[2]-0.1)+exp(x[1]-3*x[2]-0.1)-exp(-x[1]-0.1)
+  g[2] = 3*exp(x[1]+3*x[2]-0.1)-3*exp(x[1]-3*x[2]-0.1)
+  return(g)
+}
+
+f_hessian <- function(x){
+  H = matrix(0, nrow=2, ncol=2)
+  H[1,1] = exp(x[1]+3*x[2]-0.1)+exp(x[1]-3*x[2]-0.1)+exp(-x[1]-0.1)
+  H[2,1] = 3*exp(x[1]+3*x[2]-0.1)-3*exp(x[1]-3*x[2]-0.1)
+  H[1,2] = H[2,1]
+  H[2,2] = 9*exp(x[1]+3*x[2]-0.1)+9*exp(x[1]-3*x[2]-0.1)
+  return(H)
+}
+
+plot_scale = 1
+plot_center = c(-0.345,0)
+```
+
+#### Non-convex functions
+```{r}
+f_fun <- function(x, gamma=0.1){
+  return(-cos(x[1]^2+x[2]^2) + gamma * (x[1]^2+x[2]^2) )
+}
+
+f_grad <- function(x, gamma=0.1){
+  g = rep(0,2)
+  g[1] = sin(x[1]^2+x[2]^2) * 2 * x[1] + 2*gamma*x[1]
+  g[2] = sin(x[1]^2+x[2]^2) * 2 * x[2] + 2*gamma*x[2]
+  return(g)
+}
+
+f_hessian <- function(x, gamma=0.1){
+  H = matrix(0, nrow=2, ncol=2)
+  xl2 = x[1]^2 + x[2]^2
+  H[1,1] = 2*sin(xl2) + 4*x[1]^2*cos(xl2) + 0.2
+  H[2,1] = 4*x[1]*x[2]*cos(xl2)
+  H[1,2] = H[2,1]
+  H[2,2] = 2*sin(xl2) + 4*x[2]^2*cos(xl2) + 0.2
+  return(H) 
+}
+
+plot_scale = 3
+plot_center = c(0,0)
+```
+
+
+#### Plot Contours
+```{r}
+library(ggplot2)
+x_uni = seq(-1,1,0.01)*plot_scale
+n_uni = length(x_uni)
+n = n_uni^2
+x = matrix(0, nrow=n, ncol=2)
+y = rep(0, n)
+loc = 1
+for (i in 1:n_uni){
+  for (j in 1:n_uni){
+    x[loc,] = c(x_uni[i], x_uni[j]) + plot_center
+    y[loc] = f_fun(x[loc,])
+    loc = loc + 1
+  }
+}
+df = data.frame(x1=x[,1],x2=x[,2],y=y)
+p0 = ggplot() + geom_raster(data=df,aes(x1,x2,fill=y),interpolate=TRUE) + 
+  scale_fill_distiller(palette = "Spectral") + 
+  geom_contour(data=df,aes(x1,x2,z=y),color='black',linetype="dotted") + 
+  theme_void()
+print(p0)
+```
+
+
+#### Exact Netwon's Method
+```{r}
+Newton <- function(fun, grad, hes, x, y){
+  gradient = grad(x)
+  hessian = hes(x)
+  delta_x = - solve(hessian) %*% matrix(gradient,nrow=length(gradient),ncol=1)
+  x_new = x + delta_x
+  y_new = fun(x_new)
+  return(list(x_new,y_new))
+}
+```
+
+
+#### Step by step illustration for Exact Newton's Method
+###### Initialization
+```{r}
+x = c(0.3,0.3)*plot_scale + plot_center
+y = f_fun(x)
+df_point = data.frame(x1=x[1],x2=x[2])
+pk = p0 + geom_point(data=df_point,aes(x1,x2),shape=9,size=3)
+print(pk)
+```
+###### Run the following chunk to perform one gradient step. Repeatedly run to get the trajectory of Gradient descent.
+```{r}
+tol = 1e-5
+xy_new = Newton(f_fun, f_grad, f_hessian, x, y)
+x_new = xy_new[[1]]
+df_point = data.frame(x1=x_new[1],x2=x_new[2])
+df_line = data.frame(x1=c(x[1],x_new[1]),x2=c(x[2],x_new[2]))
+pk = pk + geom_point(data=df_point,aes(x1,x2),shape=9,size=3) + 
+  geom_line(data=df_line,aes(x1,x2),linewidth=1.2)
+print(pk)
+x = x_new
+y = xy_new[[2]]
+print(xy_new)
+```
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,178 @@
+---
+title: "GLM"
+author: "Giacomo Negri"
+date: "November 12, 2024"
+output: html_document
+---
+
+
+## Linear Regression
+```{r}
+# Generate aritifical data set
+n <- 100 #number of observations
+x1 <- rnorm(n) #covariate
+X <- cbind(1, x1) #covariate matrix with intercept
+true_beta <- c(2,3) #true values of the parameters
+true_sigma <- 1 #true variance of the residuals
+true_means <- c(X%*%true_beta) #means
+Y <- rnorm(n, true_means, true_sigma) #dependent variable
+myData <- data.frame(Y = Y, X1 = x1)
+
+# fit the model: use lm function
+fit <- lm(Y ~ X1, data=myData)
+summary(fit)
+beta_est <- coefficients(fit) #coefficients of the model
+
+# prediction
+predict(fit, data.frame(X1 = c(1,2,3)))
+beta_est[1]+beta_est[2]*c(1,2,3)
+
+# plot of the data and fitted values
+plot(x1, Y, pch = 19, main = "", xlab = "Covariate", ylab = "Value")
+points(x1, predict(fit, data.frame(X1 = x1)), col = "red", pch = 19)
+
+# confidence intervals
+confint(fit, level = 0.95)
+```
+
+
+## Logistic Regression
+```{r}
+# generate data: single covariate
+n <- 100 #number of observations
+x1 <- rnorm(n) #covariate
+X <- cbind(1, x1) #covariate matrix with intercept
+true_beta <- c(-0.1,-1.5) #true values of the parameters
+true_log_odds <- c(X%*%true_beta) #log odds
+true_prob <- exp(true_log_odds)/(1+exp(true_log_odds)) #probabilities
+Y <- rbinom(n, 1, true_prob) #dependent variable
+myData <- data.frame(Y = Y, X1 = x1)
+
+# fit the model: use glm function. the default link is the canonical one
+fit <- glm(Y ~ X1, family=binomial(), data=myData)
+summary(fit)
+beta_est <- coefficients(fit) #coefficients of the model
+
+# prediction: log-odds
+predict(fit, data.frame(X1 = c(4,2,5.5)), type = "link")
+log_odds_est <- beta_est[1]+beta_est[2]*c(1,2,3)
+
+# prediction: probability
+predict(fit, data.frame(X1 = c(1,2,3)), type = "response")
+exp(log_odds_est)/(1+exp(log_odds_est))
+
+# plot of the data and probabilities
+plot(x1, Y, pch = 19, main = "", xlab = "Covariate", ylab = "Probability")
+points(x1, predict(fit, data.frame(X1 = x1), type = "response"), col = "red", pch = 19)
+
+# confidence intervals
+confint(fit, level = 0.95)
+```
+
+
+##Poisson Regression
+```{r}
+# generate data: single covariate
+n <- 100 #number of observations
+x1 <- rnorm(n) #covariate
+X <- cbind(1, x1) #covariate matrix with intercept
+true_beta <- c(0.1,2) #true values of the parameters
+true_log <- c(X%*%true_beta) #log odds
+true_lambda <- exp(true_log) #parameter
+Y <- rpois(n, true_lambda) #dependent variable
+myData <- data.frame(Y = Y, X1 = x1)
+
+# fit the model: the default link is the canonical one
+fit <- glm(Y ~ X1, family=poisson(), data=myData)
+summary(fit)
+beta_est <- coefficients(fit) #coefficients of the model
+
+# prediction: log-odds
+predict(fit, data.frame(X1 = c(1,2,3)), type = "link")
+log_est <- beta_est[1]+beta_est[2]*c(1,2,3)
+
+# prediction: probability
+predict(fit, data.frame(X1 = c(1,2,3)), type = "response")
+exp(log_est)
+
+# plot of the data and counts
+plot(x1, Y, pch = 19, main = "", xlab = "Covariate", ylab = "Counts")
+points(x1, predict(fit, data.frame(X1 = x1), type = "response"), col = "red", pch = 19)
+
+# confidence intervals
+confint(fit, level = 0.95)
+```
+
+
+## South Africa Heart Disease Dataset
+```{r}
+library(bestglm)
+
+#load the data
+data("SAheart")
+head(SAheart)
+help("SAheart")
+```
+
+This data comes from a retrospective sample of males in a heart-disease high-risk region of the Western Cape, South Africa.
+
+1) Fit a logistic regression.
+2) Is the variable ldl relevant? What is its effect?
+3) Provide a visual representation of the estimates.
+4) What is the impact of a one-unit increase of ldl on the odds and log-odds of a coronary disease?
+5) What is the impact of a one-unit increase of ldl on the probability of a coronary disease?
+
+#### 1)-2)
+```{r}
+fit <- glm(chd ~ ldl, family=binomial(), data=SAheart)
+summary(fit) #the variable is statistically significant at level 0.001
+beta_est <- coefficients(fit) #coefficients of the model
+confint(fit) #confidence interval of the second coefficient
+```
+
+#### 3)
+```{r}
+plot(SAheart$ldl, SAheart$chd, pch = 19, main = "", xlab = "Covariate", ylab = "Probability")
+points(SAheart$ldl, predict(fit, data.frame(ldl = SAheart$ldl), type = "response"), col = "red", pch = 19)
+```
+
+#### 4)
+```{r}
+print(paste("The difference between the log-odds is given by",
+            beta_est[2]))
+print(paste("The ratio between the odds is given by",
+            exp(beta_est[2])))
+```
+
+#### 5)
+It depends on the starting value of ldl! We do not have a general simple result here. We can do it on a grid
+```{r}
+grid <- seq(0.1,20, length = 1000) #generate a grid of values for ldl
+#difference between probability with and without unit increase
+diff_prob <-exp(beta_est[1]+beta_est[2]*(grid+1))/(1+exp(beta_est[1]+beta_est[2]*(grid+1)))-exp(beta_est[1]+beta_est[2]*grid)/(1+exp(beta_est[1]+beta_est[2]*grid))
+plot(grid, diff_prob, pch = 19, col = "red", main = "Effect of a unit increase", ylab = "Probability", xlab = "Grid")
+```
+
+
+## Now considering all covariates
+1) Fit a logistic regression.
+2) Is the variable ldl relevant? What is its effect?
+3) What is the impact of a one-unit increase of ldl on the odds and log-odds of a coronary disease?
+
+#### 1)-2)
+```{r}
+fit <- glm(chd ~ ., family=binomial(), data=SAheart)
+summary(fit) #the variable is statistically significant at level 0.001
+beta_est <- coefficients(fit) #coefficients of the model
+confint(fit) #confidence interval of the second coefficient
+```
+
+#### 3)
+```{r}
+print(paste("The difference between the log-odds is given by",
+            beta_est[4]))
+print(paste("The ratio between the odds is given by",
+            exp(beta_est[4])))
+```
+
+

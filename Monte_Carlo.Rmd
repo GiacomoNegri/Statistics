@@ -1,0 +1,123 @@
+---
+title: "Monte Carlo"
+author: "Giacomo Negri"
+date: "October 31, 2024"
+output: html_document
+---
+
+## Rejection Sampling for Beta(3,3)
+```{r}
+library(ggplot2)
+
+set.seed(11)
+nmc = 5000
+M = 1/(beta(3,3)*16)
+Y_lst = rep(-1, nmc)
+for (i in 1:nmc){
+  X = runif(1)
+  U = runif(1)
+  if (U < dbeta(X,3,3)/M){
+    Y_lst[i] = X
+  }
+}
+Y_lst = Y_lst[which(Y_lst>=0)]
+print(paste('M=',M,' accept ratio=',length(Y_lst)/nmc))
+
+## overlap histogram with density 
+nbin = 50
+df_density = data.frame(x=seq(0,1,0.01),y=dbeta(seq(0,1,0.01),3,3)*length(Y_lst)/nbin)
+ggplot() + geom_histogram(data=data.frame(Y_lst),aes(x=Y_lst),alpha=0.5,bins=nbin) +
+  geom_line(data=df_density,aes(x=x,y=y)) + xlab('x') + ylab('Frequencies')
+```
+
+
+## Calculating pi
+```{r}
+library(ggplot2)
+library(ggforce)
+nmc = 5000
+coords = matrix(0, nrow = nmc, ncol =2)
+n_in = 0
+for (i in 1:nmc){
+  coords[i,] = (runif(2)-0.5)*2
+  if (sum(coords[i,]^2)<=1){
+    n_in = n_in + 1
+  }
+}
+print(paste('approximate of pi: ', n_in/nmc*4))
+df_pi = data.frame(x1=coords[,1],x2=coords[,2])
+ggplot() +
+  geom_point(data=df_pi,aes(x=x1,y=x2),size=0.5) +
+  geom_circle(aes(x0 = 0, y0 = 0, r = 1),color='red',linewidth=2)
+```
+
+
+
+
+## Birthday problem
+Suppose a class has 75 students. What's the probability that at least 10 students have the their birthday in a same month? 
+```{r}
+nmc = 5000
+n_stu = 75
+thre = 10
+births = seq(1,12,1)
+birth_mat = matrix(sample(births,nmc*n_stu,replace=TRUE), nmc, n_stu)
+n_same = 0
+for (i in 1:nmc){
+  for (j in 1:12){
+    if ( length(which(birth_mat[i,]==j)) >= thre ){
+      n_same = n_same + 1
+      break
+    }
+  }
+}
+print(paste('the approximate probability that at least', thre, ' out of ', n_stu, 
+            'students have birthday in a same month is:'))
+print(n_same/nmc)
+```
+
+
+
+
+
+
+## Density and Moment Estimation for Student-t with degree of freedom 2
+```{r}
+library(ggplot2)
+t2 <- function(){
+  xs = rnorm(3)
+  return(xs[1]/sqrt((xs[2]^2+xs[3]^2)/2))
+}
+
+tdensity <- function(x,nu=2){
+  return( gamma((nu+1)/2) / sqrt(pi*nu) / gamma(nu/2) * (1+x^2/nu)^(-(nu+1)/2) )
+}
+
+nmc = 10000
+t_lst = rep(0,nmc)
+for (i in 1:nmc){
+  t_lst[i] = t2()
+}
+t_lst_truncate = t_lst[which(abs(t_lst)<10)]
+nt = length(t_lst_truncate)
+
+## density estimation. The MC samples are truncated to plot histograms
+nbin = 50
+x = seq(-10,10,0.01)
+y = rep(0,length(x))
+for (i in 1:length(x)){
+  y[i] = tdensity(x[i])
+}
+df_density = data.frame(x=x,y=y*nt/nbin*20)
+ggplot() + geom_histogram(data=data.frame(t_lst_truncate),aes(t_lst_truncate),alpha=0.5,bins=nbin) +
+  geom_line(data=df_density,aes(x=x,y=y)) + xlab('x') + ylab('Frequencies') +
+  xlim(-10,10)
+
+## moment estimation (the second momenet actually does not exist)
+print(paste('first moment:', mean(t_lst)))
+print(paste('second moment:', mean(t_lst^2)))
+```
+
+
+
+
