@@ -62,8 +62,7 @@ We explored six different parameter configurations:
 * Min MSE difference: 0 
 * Last difference: 0.001122277
 
-![MSE Comparison Case 1](images/Comparison_Case1.png)
-![MSE Difference Case 1](images/Difference_Case1.png)
+<img src="images/Comparison_Case1.png" width="400" alt="MSE Comparison Case 1">   <img src="images/Difference_Case1.png" width="400" alt="MSE Difference Case 1">
 
 #### Case 2
 * Mean MSE difference: -8.591589e-07 
@@ -71,17 +70,15 @@ We explored six different parameter configurations:
 * Min MSE difference: 0 
 * Last difference: 0.001122277
 
-![MSE Comparison Case 2](images/Comparison_Case2.png)
-![MSE Difference Case 2](images/Difference_Case2.png)
+<img src="images/Comparison_Case2.png" width="400" alt="MSE Comparison Case 2">   <img src="images/Difference_Case2.png" width="400" alt="MSE Difference Case 2">
 
 #### Case 3
 * Mean MSE difference: 6.447245e-05 
 * Max MSE differnce: 0.001397206
 * Min MSE difference: 0 
 * Last difference: 0.0001294619
-
-![MSE Comparison Case 3](images/Comparison_Case3.png)
-![MSE Difference Case 3](images/Difference_Case3.png)
+* 
+<img src="images/Comparison_Case3.png" width="400" alt="MSE Comparison Case 3">   <img src="images/Difference_Case3.png" width="400" alt="MSE Difference Case 3">
 
 #### Case 5
 * Mean MSE difference: 8.106573e-07
@@ -89,8 +86,7 @@ We explored six different parameter configurations:
 * Min MSE difference: -4.083464e-05
 * Last difference: -1.374978e-06
 
-![MSE Comparison Case 4](images/Comparison_Case4.png)
-![MSE Difference Case 4](images/Difference_Case4.png)
+<img src="images/Comparison_Case4.png" width="400" alt="MSE Comparison Case 4">   <img src="images/Difference_Case4.png" width="400" alt="MSE Difference Case 4">
 
 #### Case 5
 * Mean MSE difference: 0.08085813
@@ -98,8 +94,7 @@ We explored six different parameter configurations:
 * Min MSE difference: -0.2565541 
 * Last difference: 0.208852
 
-![MSE Comparison Case 5](images/Comparison_Case5.png)
-![MSE Difference Case 5](images/Difference_Case5.png)
+<img src="images/Comparison_Case5.png" width="400" alt="MSE Comparison Case 5">   <img src="images/Difference_Case5.png" width="400" alt="MSE Difference Case 5">
 
 #### Case 6
 * Mean MSE difference: 1.12972e-05
@@ -107,8 +102,7 @@ We explored six different parameter configurations:
 * Min MSE difference: -0.0003273479 
 * Last difference: -5.718834e-06
 
-![MSE Comparison Case 6](images/Comparison_Case6.png)
-![MSE Difference Case 6](images/Difference_Case6.png)
+<img src="images/Comparison_Case6.png" width="400" alt="MSE Comparison Case 6">   <img src="images/Difference_Case6.png" width="400" alt="MSE Difference Case 6">
 
 ### Key Findings
 
