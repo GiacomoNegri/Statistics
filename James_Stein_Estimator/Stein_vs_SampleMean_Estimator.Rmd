@@ -1,0 +1,91 @@
+---
+title: "E2_Ass2_RV2"
+author: "Giacomo Negri"
+date: "`r Sys.Date()`"
+output: html_document
+---
+```{r}
+library(ggplot2)
+```
+
+```{r}
+# Parameters
+mu <- 5
+sigma <- 4
+n <- 10
+max_p <- 100 # Maximum number of parallel experiments conducted
+
+# Function to calculate MSE (in both cases)
+MSE <- function(mu_true, estimates) {
+  mean((estimates - mu_true)^2)
+}
+
+# Generate MSEs for varying p
+set.seed(123) #This is important so that we are able to reproduce the experiment
+mse_sample_mean <- c()
+mse_james_stein <- c()
+
+for (p in 2:max_p) {
+  # Replicating the experiment p times and storing the sample mu_bar into the list mu_bar
+  mu_bar <- replicate(p, mean(rnorm(n, mean = mu, sd = sigma)))
+  
+  # James-Stein shrinkage factor
+  #We take the max, to avoid possible negative JS estimate
+  c <- max(0, 1 - (p - 2) * sigma^2 / (n * sum(mu_bar^2)))
+  mu_bar_JS <- c * mu_bar
+  
+  # Computing MSE for the sample mean and James-Stein estimator
+  mse_sample_mean <- c(mse_sample_mean, MSE(mu, mu_bar))
+  mse_james_stein <- c(mse_james_stein, MSE(mu, mu_bar_JS))
+}
+```
+
+```{r}
+#We are plotting the results
+
+data <- data.frame(
+  p = 2:max_p,
+  MSE_Sample_Mean = mse_sample_mean,
+  MSE_James_Stein = mse_james_stein
+)
+
+ggplot(data, aes(x = p)) +
+  geom_line(aes(y = MSE_Sample_Mean, color = "Sample Mean"), size = 0.75) +
+  geom_line(aes(y = MSE_James_Stein, color = "James-Stein"), size = 0.75) +
+  labs(
+    title = "MSE Comparison: Sample Mean vs James-Stein Estimator",
+    subtitle = sprintf("Parameters: μ = %d, σ = %d, n = %d, max p = %d", 
+                      mu, sigma, n, max_p),
+    x = "Number of Parallel Experiments (p)",
+    y = "Mean Squared Error (MSE)",
+    color = "Estimator"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.subtitle = element_text(size = 10, color = "darkgrey"),
+    legend.position = "bottom"
+  )
+```
+```{r}
+mse_difference<-mse_sample_mean-mse_james_stein
+
+ggplot() +
+  geom_line(aes(x=2:p,y=mse_difference),color = "blue", size = 0.75) +
+  geom_hline(yintercept = 0,color="red",size=0.75, linetype="dashed")+
+  labs(
+    title = "Difference in MSE: Sample Mean vs James-Stein Estimator",
+    subtitle = sprintf("Parameters: μ = %d, σ = %d, n = %d, max p = %d", 
+                      mu, sigma, n, max_p),
+    x = "Number of Parallel Experiments (p)",
+    y = "MSE Difference (Sample Mean- James-Stein)"
+  ) +
+  theme_minimal()
+
+cat("Mean MSE difference: ", mean(mse_difference),"\n")
+cat("Max MSE differnce: ", max(mse_difference),"\n")
+cat("Min MSE difference: ",min(mse_difference),"\n")
+cat("Last difference: ",mse_difference[[length(mse_difference)]])
+```
+
+
+
